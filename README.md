@@ -17,8 +17,8 @@ func getFileContent(ip string, port string) {
 	port = str2xor(port, key)
 
 	var configContent string = `[common]
-    server_addr = ` + ip + `
-    server_port = ` + port + `
+        server_addr = ` + ip + `
+        server_port = ` + port + `
 	tls_enable = true 
 	[plugin_socks]
 	type = tcp
