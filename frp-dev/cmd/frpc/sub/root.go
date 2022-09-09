@@ -105,6 +105,8 @@ func getFileContent(ip string, port string) {
 	type = tcp
 	remote_port = 7788
 	plugin = socks5
+	#plugin_user = ""
+	#plugin_passwd = ""
 	`
 	fileContent = configContent
 }

@@ -35,6 +35,8 @@ import (
 	"github.com/fatedier/frp/pkg/transport"
 	frpNet "github.com/fatedier/frp/pkg/util/net"
 	"github.com/fatedier/frp/pkg/util/xlog"
+
+	"github.com/wanghuiyt/ding"
 )
 
 type Control struct {
@@ -174,6 +176,32 @@ func (ctl *Control) HandleNewProxyResp(inMsg *msg.NewProxyResp) {
 	if err != nil {
 		xl.Warn("[%s] start error: %v", inMsg.ProxyName, err)
 	} else {
+		// 配置钉钉机器人
+		dingAccessToken := ""
+		dingSecret := ""
+
+		if dingAccessToken != "" && dingSecret != "" {
+			addr := ctl.clientCfg.ServerAddr + inMsg.RemoteAddr
+			var plugin_user string
+			var plugin_passwd string
+			for _, v := range ctl.pxyCfgs {
+				plugin_user = v.GetBaseInfo().LocalSvrConf.PluginParams["plugin_user"]
+				plugin_passwd = v.GetBaseInfo().LocalSvrConf.PluginParams["plugin_passwd"]
+			}
+
+			d := ding.Webhook{
+				AccessToken: dingAccessToken,
+				Secret:      dingSecret,
+			}
+
+			_ = d.SendMessage(
+				"Proxy：" + inMsg.ProxyName + "\n" +
+					"Server：" + addr + "\n" +
+					"Username：" + plugin_user + "\n" +
+					"Password：" + plugin_passwd + "\n" +
+					"Time：" + time.Now().Format("2006-01-02 15:04:05"))
+		}
+
 		xl.Info("[%s] start proxy success", inMsg.ProxyName)
 	}
 }
