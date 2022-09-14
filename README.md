@@ -43,6 +43,7 @@ $ ./frpc -t "E\AZZSAZTBEET" -p "CUCD"  # 192.168.111.1:7000
 
 ![](./frp-1.jpg)
 
+
 ## 钉钉提醒
 - 需要在`client/control.go#HandleNewProxyResp()`函数中配置钉钉机器人`AccessToken`和`Secret`，然后在前面的配置部分添加相关`plugin_user`和`plugin_passwd`即可
 
@@ -67,6 +68,59 @@ func (ctl *Control) HandleNewProxyResp(inMsg *msg.NewProxyResp) {
 
 ![](./frp-2.jpg)
 
+
+## 域前置
+- 修改依赖包 `go/pkg/mod/golang.org/x/net@v0.0.0-202xxx/websocket/client.go#NewConfig()` 方法，添加回源 Host 
+
+```diff
+func NewConfig(server, origin string) (config *Config, err error) {
+	config = new(Config)
+	config.Version = ProtocolVersionHybi13
+	config.Location, err = url.ParseRequestURI(server)
+	if err != nil {
+		return
+	}
+	config.Origin, err = url.ParseRequestURI(origin)
+	if err != nil {
+		return
+	}
+	config.Header = http.Header(make(map[string][]string))
++	config.Header.Set("Host", "test.baidu.local")
+	return
+}
+```
+
+- 然后修改 `go/pkg/mod/golang.org/x/net@v0.0.0-202xxx/websocket/hybi.go#hybiClientHandshake()` 方法
+
+```diff
+func hybiClientHandshake(config *Config, br *bufio.Reader, bw *bufio.Writer) (err error) {
+	bw.WriteString("GET " + config.Location.RequestURI() + " HTTP/1.1\r\n")
+
+	// According to RFC 6874, an HTTP client, proxy, or other
+	// intermediary must remove any IPv6 zone identifier attached
+	// to an outgoing URI.
+
++	// FRP Websocket Host
++	host := config.Location.Host
++	if tmpHost := config.Header.Get("Host"); tmpHost != "" {
++		host = tmpHost
++	}
++	bw.WriteString("Host: " + removeZone(host) + "\r\n")
++	// bw.WriteString("Host: " + removeZone(config.Location.Host) + "\r\n")
+ 
+    // ...
+}
+```
+
+- 最后在`cmd/frpc/sub/root.go#getFileContent()`中配置开启 Websocket 协议
+
+```
+protocol = websocket
+
+```
+
 ## 参考文章
 - [FRP改造计划](https://uknowsec.cn/posts/notes/FRP%E6%94%B9%E9%80%A0%E8%AE%A1%E5%88%92.html)
+- [FRP改造计划续](https://uknowsec.cn/posts/notes/FRP%E6%94%B9%E9%80%A0%E8%AE%A1%E5%88%92%E7%BB%AD.html)
+- [frp改版-域前置](https://xz.aliyun.com/t/11460)
 - [https://github.com/wanghuiyt/ding](https://github.com/wanghuiyt/ding)

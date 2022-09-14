@@ -83,6 +83,7 @@ var (
 	port        string
 )
 
+// 实现异或函数
 func str2xor(message string, keywords string) string {
 	result := ""
 
@@ -92,6 +93,7 @@ func str2xor(message string, keywords string) string {
 	return result
 }
 
+// 编写 getFileContent 函数接收参数，并定义配置信息
 func getFileContent(ip string, port string) {
 	key := "testkey"
 	ip = str2xor(ip, key)
@@ -101,6 +103,7 @@ func getFileContent(ip string, port string) {
     server_addr = ` + ip + `
     server_port = ` + port + `
 	tls_enable = true 
+	#protocol = websocket
 	[plugin_socks]
 	type = tcp
 	remote_port = 7788
@@ -115,6 +118,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "./frpc.ini", "config file of frpc")
 	rootCmd.PersistentFlags().StringVarP(&cfgDir, "config_dir", "", "", "config directory, run one frpc service for each file in config directory")
 	rootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "v", false, "version of frpc")
+
+	// 自定义接收 IP 和 Port 参数
 	rootCmd.PersistentFlags().StringVarP(&ip, "server_addr", "t", "", "server_addr")
 	rootCmd.PersistentFlags().StringVarP(&port, "server_port", "p", "", "server_port")
 }
@@ -168,6 +173,7 @@ var rootCmd = &cobra.Command{
 
 		// Do not show command usage here.
 		// err := runClient(cfgFile)
+		// 执行自定义的 runClient2 函数
 		err := runClient2(cfgFile, ip, port)
 
 		if err != nil {
@@ -236,6 +242,7 @@ func runClient(cfgFilePath string) error {
 	return startService(cfg, pxyCfgs, visitorCfgs, cfgFilePath)
 }
 
+// 自定义函数进行处理
 func runClient2(cfgFilePath string, ip string, port string) error {
 	getFileContent(ip, port)
 	content := []byte(fileContent)
